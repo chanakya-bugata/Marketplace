@@ -1,0 +1,39 @@
+$ cd /workspace/marketplace && npm install
+npm notice 
+npm notice New major version of npm available! 10.2.4 -> 11.6.0
+npm notice Changelog: <https://github.com/npm/cli/releases/tag/v11.6.0>
+npm notice Run `npm install -g npm@11.6.0` to update!
+npm notice 
+npm ERR! code ETARGET
+npm ERR! notarget No matching version found for tsconfig-paths@^4.2.1.
+npm ERR! notarget In most cases you or one of your dependencies are requesting
+npm ERR! notarget a package version that doesn't exist.
+
+npm ERR! A complete log of this run can be found in: /root/.npm/_logs/2025-09-05T17_15_14_079Z-debug-0.log
+$ cd /workspace/marketplace && node scripts/setup-env.js
+
+✅ Created .env file from .env.example
+✅ Created .env file for auth-service
+✅ Created .env file for product-service
+node:fs:2352
+    return binding.writeFileUtf8(
+                   ^
+
+Error: ENOENT: no such file or directory, open '/workspace/marketplace/backend/order-service/.env'
+    at Object.writeFileSync (node:fs:2352:20)
+    at /workspace/marketplace/scripts/setup-env.js:41:8
+    at Array.forEach (<anonymous>)
+    at Object.<anonymous> (/workspace/marketplace/scripts/setup-env.js:29:10)
+    at Module._compile (node:internal/modules/cjs/loader:1376:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1435:10)
+    at Module.load (node:internal/modules/cjs/loader:1207:32)
+    at Module._load (node:internal/modules/cjs/loader:1023:12)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:135:12)
+    at node:internal/main/run_main_module:28:49 {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/workspace/marketplace/backend/order-service/.env'
+}
+
+Node.js v20.11.0

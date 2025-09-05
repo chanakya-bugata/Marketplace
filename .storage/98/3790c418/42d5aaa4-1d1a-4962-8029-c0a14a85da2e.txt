@@ -1,0 +1,166 @@
+$ find /workspace/marketplace -type f -name "*.json" -o -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.yml" -o -name "*.yaml" -o -name "*.md" -o -name "Dockerfile" -o -name ".env*" | head -50
+/workspace/marketplace/.env
+/workspace/marketplace/.env.example
+/workspace/marketplace/README.md
+/workspace/marketplace/backend/api-gateway/Dockerfile
+/workspace/marketplace/backend/api-gateway/package.json
+/workspace/marketplace/backend/api-gateway/src/app.module.ts
+/workspace/marketplace/backend/api-gateway/src/main.ts
+/workspace/marketplace/backend/auth-service/.env
+/workspace/marketplace/backend/auth-service/Dockerfile
+/workspace/marketplace/backend/auth-service/package.json
+/workspace/marketplace/backend/auth-service/src/app.module.ts
+/workspace/marketplace/backend/auth-service/src/auth/auth.controller.ts
+/workspace/marketplace/backend/auth-service/src/auth/auth.module.ts
+/workspace/marketplace/backend/auth-service/src/auth/auth.service.ts
+/workspace/marketplace/backend/auth-service/src/auth/decorators/current-user.decorator.ts
+/workspace/marketplace/backend/auth-service/src/auth/guards/jwt-auth.guard.ts
+/workspace/marketplace/backend/auth-service/src/auth/strategies/jwt.strategy.ts
+/workspace/marketplace/backend/auth-service/src/auth/strategies/local.strategy.ts
+/workspace/marketplace/backend/auth-service/src/health/health.controller.ts
+/workspace/marketplace/backend/auth-service/src/main.ts
+/workspace/marketplace/backend/auth-service/src/prisma/prisma.module.ts
+/workspace/marketplace/backend/auth-service/src/prisma/prisma.service.ts
+/workspace/marketplace/backend/auth-service/src/users/users.controller.ts
+/workspace/marketplace/backend/auth-service/src/users/users.module.ts
+/workspace/marketplace/backend/auth-service/src/users/users.service.ts
+/workspace/marketplace/backend/product-service/.env
+/workspace/marketplace/backend/product-service/Dockerfile
+/workspace/marketplace/backend/product-service/package.json
+/workspace/marketplace/backend/product-service/src/app.module.ts
+/workspace/marketplace/backend/product-service/src/categories/categories.controller.ts
+/workspace/marketplace/backend/product-service/src/categories/categories.module.ts
+/workspace/marketplace/backend/product-service/src/categories/categories.service.ts
+/workspace/marketplace/backend/product-service/src/health/health.controller.ts
+/workspace/marketplace/backend/product-service/src/main.ts
+/workspace/marketplace/backend/product-service/src/prisma/prisma.module.ts
+/workspace/marketplace/backend/product-service/src/prisma/prisma.service.ts
+/workspace/marketplace/backend/product-service/src/products/products.controller.ts
+/workspace/marketplace/backend/product-service/src/products/products.module.ts
+/workspace/marketplace/backend/product-service/src/products/products.service.ts
+/workspace/marketplace/backend/product-service/src/vendors/vendors.controller.ts
+/workspace/marketplace/backend/product-service/src/vendors/vendors.module.ts
+/workspace/marketplace/backend/product-service/src/vendors/vendors.service.ts
+/workspace/marketplace/backend/shared/package.json
+/workspace/marketplace/backend/shared/src/dtos/auth.dto.ts
+/workspace/marketplace/backend/shared/src/dtos/notification.dto.ts
+/workspace/marketplace/backend/shared/src/dtos/order.dto.ts
+/workspace/marketplace/backend/shared/src/dtos/payment.dto.ts
+/workspace/marketplace/backend/shared/src/dtos/product.dto.ts
+/workspace/marketplace/backend/shared/src/index.ts
+/workspace/marketplace/backend/shared/src/types/notification.types.ts
+$ tree /workspace/marketplace -I 'node_modules|dist|build|.git' -a
+
+/workspace/marketplace
+├── .env
+├── .env.example
+├── README.md
+├── backend
+│   ├── api-gateway
+│   │   ├── Dockerfile
+│   │   ├── package.json
+│   │   └── src
+│   │       ├── app.module.ts
+│   │       └── main.ts
+│   ├── auth-service
+│   │   ├── .env
+│   │   ├── Dockerfile
+│   │   ├── package.json
+│   │   ├── prisma
+│   │   │   └── schema.prisma
+│   │   └── src
+│   │       ├── app.module.ts
+│   │       ├── auth
+│   │       │   ├── auth.controller.ts
+│   │       │   ├── auth.module.ts
+│   │       │   ├── auth.service.ts
+│   │       │   ├── decorators
+│   │       │   │   └── current-user.decorator.ts
+│   │       │   ├── guards
+│   │       │   │   └── jwt-auth.guard.ts
+│   │       │   └── strategies
+│   │       │       ├── jwt.strategy.ts
+│   │       │       └── local.strategy.ts
+│   │       ├── health
+│   │       │   └── health.controller.ts
+│   │       ├── main.ts
+│   │       ├── prisma
+│   │       │   ├── prisma.module.ts
+│   │       │   └── prisma.service.ts
+│   │       └── users
+│   │           ├── users.controller.ts
+│   │           ├── users.module.ts
+│   │           └── users.service.ts
+│   ├── product-service
+│   │   ├── .env
+│   │   ├── Dockerfile
+│   │   ├── package.json
+│   │   ├── prisma
+│   │   │   └── schema.prisma
+│   │   └── src
+│   │       ├── app.module.ts
+│   │       ├── categories
+│   │       │   ├── categories.controller.ts
+│   │       │   ├── categories.module.ts
+│   │       │   └── categories.service.ts
+│   │       ├── health
+│   │       │   └── health.controller.ts
+│   │       ├── main.ts
+│   │       ├── prisma
+│   │       │   ├── prisma.module.ts
+│   │       │   └── prisma.service.ts
+│   │       ├── products
+│   │       │   ├── products.controller.ts
+│   │       │   ├── products.module.ts
+│   │       │   └── products.service.ts
+│   │       └── vendors
+│   │           ├── vendors.controller.ts
+│   │           ├── vendors.module.ts
+│   │           └── vendors.service.ts
+│   └── shared
+│       ├── package.json
+│       ├── src
+│       │   ├── dtos
+│       │   │   ├── auth.dto.ts
+│       │   │   ├── notification.dto.ts
+│       │   │   ├── order.dto.ts
+│       │   │   ├── payment.dto.ts
+│       │   │   └── product.dto.ts
+│       │   ├── index.ts
+│       │   ├── types
+│       │   │   ├── notification.types.ts
+│       │   │   ├── order.types.ts
+│       │   │   ├── payment.types.ts
+│       │   │   ├── product.types.ts
+│       │   │   └── user.types.ts
+│       │   └── utils
+│       │       ├── jwt.util.ts
+│       │       ├── pagination.util.ts
+│       │       └── response.util.ts
+│       └── tsconfig.json
+├── docker-compose.yml
+├── docs
+│   ├── marketplace_class_diagram.mermaid
+│   ├── marketplace_sequence_diagram.mermaid
+│   ├── prd.md
+│   └── system-design.md
+├── frontend
+│   ├── package.json
+│   ├── src
+│   │   ├── App.tsx
+│   │   ├── contexts
+│   │   │   ├── AuthContext.tsx
+│   │   │   └── SocketContext.tsx
+│   │   ├── index.css
+│   │   ├── lib
+│   │   │   └── api.ts
+│   │   ├── main.tsx
+│   │   └── pages
+│   │       └── HomePage.tsx
+│   ├── tailwind.config.js
+│   └── vite.config.ts
+├── package.json
+└── scripts
+    └── setup-env.js
+
+33 directories, 77 files

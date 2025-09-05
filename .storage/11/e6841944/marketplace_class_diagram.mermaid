@@ -1,0 +1,285 @@
+classDiagram
+    %% Auth Service Classes
+    class User {
+        +UUID id
+        +string email
+        +string passwordHash
+        +string name
+        +UserRole role
+        +boolean isActive
+        +boolean emailVerified
+        +DateTime createdAt
+        +DateTime updatedAt
+        +validatePassword(password: string) boolean
+        +generateTokens() TokenPair
+        +updateProfile(data: UpdateUserDto) User
+    }
+
+    class RefreshToken {
+        +UUID id
+        +UUID userId
+        +string token
+        +DateTime expiresAt
+        +DateTime createdAt
+        +isExpired() boolean
+        +revoke() void
+    }
+
+    class AuthService {
+        +register(dto: RegisterDto) Promise~User~
+        +login(dto: LoginDto) Promise~TokenPair~
+        +refresh(token: string) Promise~TokenPair~
+        +logout(userId: UUID) Promise~void~
+        +validateUser(email: string, password: string) Promise~User~
+        +generateTokens(user: User) TokenPair
+    }
+
+    %% Product Service Classes
+    class Vendor {
+        +UUID id
+        +UUID userId
+        +string businessName
+        +string description
+        +VendorStatus status
+        +DateTime createdAt
+        +DateTime updatedAt
+        +approve() void
+        +reject() void
+        +getProducts() Product[]
+    }
+
+    class Category {
+        +UUID id
+        +string name
+        +string slug
+        +UUID parentId
+        +DateTime createdAt
+        +getChildren() Category[]
+        +getProducts() Product[]
+    }
+
+    class Product {
+        +UUID id
+        +UUID vendorId
+        +UUID categoryId
+        +string name
+        +string description
+        +decimal price
+        +integer stockQuantity
+        +boolean isActive
+        +string[] images
+        +DateTime createdAt
+        +DateTime updatedAt
+        +updateStock(quantity: integer) void
+        +isInStock() boolean
+        +getVariants() ProductVariant[]
+    }
+
+    class ProductVariant {
+        +UUID id
+        +UUID productId
+        +string name
+        +decimal price
+        +integer stockQuantity
+        +string sku
+        +updateStock(quantity: integer) void
+    }
+
+    class ProductService {
+        +getProducts(filters: ProductFilters) Promise~Product[]~
+        +getProduct(id: UUID) Promise~Product~
+        +createProduct(dto: CreateProductDto) Promise~Product~
+        +updateProduct(id: UUID, dto: UpdateProductDto) Promise~Product~
+        +deleteProduct(id: UUID) Promise~void~
+        +searchProducts(query: string) Promise~Product[]~
+    }
+
+    %% Order Service Classes
+    class Cart {
+        +UUID id
+        +UUID userId
+        +CartItem[] items
+        +decimal totalAmount
+        +DateTime createdAt
+        +DateTime updatedAt
+        +addItem(productId: UUID, quantity: integer) void
+        +removeItem(itemId: UUID) void
+        +updateQuantity(itemId: UUID, quantity: integer) void
+        +clear() void
+        +calculateTotal() decimal
+    }
+
+    class CartItem {
+        +UUID id
+        +UUID cartId
+        +UUID productId
+        +integer quantity
+        +decimal price
+        +getSubtotal() decimal
+    }
+
+    class Order {
+        +UUID id
+        +UUID userId
+        +string orderNumber
+        +OrderStatus status
+        +decimal totalAmount
+        +decimal shippingAmount
+        +decimal taxAmount
+        +Address shippingAddress
+        +Address billingAddress
+        +OrderItem[] items
+        +DateTime createdAt
+        +DateTime updatedAt
+        +updateStatus(status: OrderStatus) void
+        +calculateTotal() decimal
+        +canCancel() boolean
+    }
+
+    class OrderItem {
+        +UUID id
+        +UUID orderId
+        +UUID productId
+        +integer quantity
+        +decimal price
+        +decimal totalPrice
+        +getSubtotal() decimal
+    }
+
+    class OrderService {
+        +getCart(userId: UUID) Promise~Cart~
+        +addToCart(userId: UUID, dto: AddToCartDto) Promise~Cart~
+        +updateCartItem(userId: UUID, itemId: UUID, quantity: integer) Promise~Cart~
+        +removeFromCart(userId: UUID, itemId: UUID) Promise~Cart~
+        +checkout(userId: UUID, dto: CheckoutDto) Promise~Order~
+        +getOrders(userId: UUID) Promise~Order[]~
+        +getOrder(id: UUID) Promise~Order~
+        +updateOrderStatus(id: UUID, status: OrderStatus) Promise~Order~
+    }
+
+    %% Payment Service Classes
+    class Payment {
+        +UUID id
+        +UUID orderId
+        +UUID userId
+        +decimal amount
+        +string currency
+        +PaymentStatus status
+        +PaymentMethod method
+        +string transactionId
+        +string gatewayResponse
+        +DateTime createdAt
+        +DateTime updatedAt
+        +process() Promise~PaymentResult~
+        +refund(amount: decimal) Promise~RefundResult~
+    }
+
+    class PaymentService {
+        +createPayment(dto: CreatePaymentDto) Promise~Payment~
+        +processPayment(id: UUID) Promise~PaymentResult~
+        +handleWebhook(provider: string, payload: any) Promise~void~
+        +refundPayment(id: UUID, amount: decimal) Promise~RefundResult~
+        +getPayment(id: UUID) Promise~Payment~
+    }
+
+    class StripeService {
+        +createPaymentIntent(amount: decimal, currency: string) Promise~PaymentIntent~
+        +confirmPayment(paymentIntentId: string) Promise~PaymentIntent~
+        +handleWebhook(payload: any, signature: string) Promise~void~
+    }
+
+    class RazorpayService {
+        +createOrder(amount: decimal, currency: string) Promise~RazorpayOrder~
+        +verifyPayment(dto: VerifyPaymentDto) Promise~boolean~
+        +handleWebhook(payload: any, signature: string) Promise~void~
+    }
+
+    %% Notification Service Classes
+    class Notification {
+        +UUID id
+        +UUID userId
+        +NotificationType type
+        +string title
+        +string message
+        +boolean isRead
+        +any metadata
+        +DateTime createdAt
+        +markAsRead() void
+    }
+
+    class NotificationService {
+        +sendNotification(dto: SendNotificationDto) Promise~void~
+        +sendEmail(dto: SendEmailDto) Promise~void~
+        +sendSMS(dto: SendSMSDto) Promise~void~
+        +sendPushNotification(dto: PushNotificationDto) Promise~void~
+        +getUserNotifications(userId: UUID) Promise~Notification[]~
+        +markAsRead(id: UUID) Promise~void~
+    }
+
+    class EmailService {
+        +sendEmail(to: string, subject: string, template: string, data: any) Promise~void~
+        +sendOrderConfirmation(order: Order) Promise~void~
+        +sendOrderShipped(order: Order) Promise~void~
+    }
+
+    class WebSocketGateway {
+        +handleConnection(client: Socket) void
+        +handleDisconnect(client: Socket) void
+        +sendToUser(userId: UUID, event: string, data: any) void
+        +sendToRoom(room: string, event: string, data: any) void
+    }
+
+    %% API Gateway Classes
+    class ApiGateway {
+        +routeRequest(request: Request) Promise~Response~
+        +authenticate(token: string) Promise~User~
+        +authorize(user: User, resource: string, action: string) boolean
+        +rateLimit(userId: UUID, endpoint: string) boolean
+    }
+
+    class JwtStrategy {
+        +validate(payload: JwtPayload) Promise~User~
+        +extractTokenFromCookie(request: Request) string
+    }
+
+    class RolesGuard {
+        +canActivate(context: ExecutionContext) boolean
+        +matchRoles(requiredRoles: string[], userRoles: string[]) boolean
+    }
+
+    %% Relationships
+    User ||--o{ RefreshToken : has
+    User ||--o{ Vendor : becomes
+    User ||--o{ Cart : owns
+    User ||--o{ Order : places
+    User ||--o{ Payment : makes
+    User ||--o{ Notification : receives
+
+    Vendor ||--o{ Product : sells
+    Category ||--o{ Product : contains
+    Category ||--o{ Category : parent-child
+    Product ||--o{ ProductVariant : has
+    Product ||--o{ CartItem : added-to
+    Product ||--o{ OrderItem : ordered-as
+
+    Cart ||--o{ CartItem : contains
+    Order ||--o{ OrderItem : contains
+    Order ||--|| Payment : paid-by
+
+    Payment ||--|| StripeService : processed-by
+    Payment ||--|| RazorpayService : processed-by
+
+    AuthService ..> User : manages
+    ProductService ..> Product : manages
+    ProductService ..> Vendor : manages
+    ProductService ..> Category : manages
+    OrderService ..> Cart : manages
+    OrderService ..> Order : manages
+    PaymentService ..> Payment : manages
+    NotificationService ..> Notification : manages
+
+    ApiGateway ..> AuthService : routes-to
+    ApiGateway ..> ProductService : routes-to
+    ApiGateway ..> OrderService : routes-to
+    ApiGateway ..> PaymentService : routes-to
+    ApiGateway ..> NotificationService : routes-to

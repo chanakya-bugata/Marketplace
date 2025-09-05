@@ -1,0 +1,179 @@
+sequenceDiagram
+    participant FE as Frontend
+    participant GW as API Gateway
+    participant AUTH as Auth Service
+    participant PROD as Product Service
+    participant ORDER as Order Service
+    participant PAY as Payment Service
+    participant NOTIF as Notification Service
+    participant DB as Database
+    participant REDIS as Redis
+    participant STRIPE as Stripe/Razorpay
+
+    %% User Registration Flow
+    Note over FE,STRIPE: User Registration & Authentication Flow
+    FE->>GW: POST /auth/register {email, password, name, role}
+    GW->>AUTH: register(registerDto)
+    AUTH->>DB: User.create(userData)
+    DB-->>AUTH: User entity
+    AUTH->>AUTH: generateTokens(user)
+    AUTH->>DB: RefreshToken.create(tokenData)
+    AUTH->>REDIS: SET user_session:userId
+    AUTH-->>GW: {accessToken, refreshToken, user}
+    GW-->>FE: Set HttpOnly cookies + user data
+    
+    %% User Login Flow
+    Note over FE,STRIPE: User Login Flow
+    FE->>GW: POST /auth/login {email, password}
+    GW->>AUTH: login(loginDto)
+    AUTH->>DB: User.findByEmail(email)
+    DB-->>AUTH: User entity
+    AUTH->>AUTH: validatePassword(password)
+    AUTH->>AUTH: generateTokens(user)
+    AUTH->>DB: RefreshToken.create(tokenData)
+    AUTH->>REDIS: SET user_session:userId
+    AUTH-->>GW: {accessToken, refreshToken, user}
+    GW-->>FE: Set HttpOnly cookies + user data
+
+    %% Product Browsing Flow
+    Note over FE,STRIPE: Product Discovery & Browsing Flow
+    FE->>GW: GET /products?category=electronics&page=1
+    GW->>GW: authenticate(request)
+    GW->>PROD: getProducts(filters)
+    PROD->>REDIS: GET products_cache:key
+    alt Cache Miss
+        PROD->>DB: Product.findMany(filters)
+        DB-->>PROD: Product[]
+        PROD->>REDIS: SET products_cache:key
+    else Cache Hit
+        REDIS-->>PROD: Cached products
+    end
+    PROD-->>GW: Product[]
+    GW-->>FE: {products, pagination, filters}
+
+    %% Product Details Flow
+    FE->>GW: GET /products/:productId
+    GW->>PROD: getProduct(productId)
+    PROD->>REDIS: GET product:productId
+    alt Cache Miss
+        PROD->>DB: Product.findById(productId)
+        DB-->>PROD: Product with variants
+        PROD->>REDIS: SET product:productId
+    else Cache Hit
+        REDIS-->>PROD: Cached product
+    end
+    PROD-->>GW: Product details
+    GW-->>FE: Product with variants, vendor info
+
+    %% Add to Cart Flow
+    Note over FE,STRIPE: Shopping Cart Management Flow
+    FE->>GW: POST /cart/items {productId, quantity}
+    GW->>GW: authenticate(request)
+    GW->>ORDER: addToCart(userId, addToCartDto)
+    ORDER->>DB: Cart.findByUserId(userId)
+    alt Cart Exists
+        ORDER->>DB: CartItem.create(itemData)
+    else No Cart
+        ORDER->>DB: Cart.create(cartData)
+        ORDER->>DB: CartItem.create(itemData)
+    end
+    ORDER->>ORDER: calculateTotal()
+    ORDER->>REDIS: SET cart:userId
+    ORDER-->>GW: Updated cart
+    GW-->>FE: Cart with items and total
+
+    %% Checkout Flow
+    Note over FE,STRIPE: Order Creation & Checkout Flow
+    FE->>GW: POST /checkout {shippingAddress, paymentMethod}
+    GW->>GW: authenticate(request)
+    GW->>ORDER: checkout(userId, checkoutDto)
+    ORDER->>DB: Cart.findByUserId(userId)
+    ORDER->>ORDER: validateCartItems()
+    ORDER->>DB: Order.create(orderData)
+    ORDER->>DB: OrderItem.createMany(orderItems)
+    ORDER->>PROD: updateProductStock(productIds, quantities)
+    PROD->>DB: Product.updateStock(productId, newQuantity)
+    ORDER->>PAY: createPayment(paymentDto)
+    PAY->>DB: Payment.create(paymentData)
+    
+    alt Stripe Payment
+        PAY->>STRIPE: createPaymentIntent(amount, currency)
+        STRIPE-->>PAY: PaymentIntent
+    else Razorpay Payment
+        PAY->>STRIPE: createOrder(amount, currency)
+        STRIPE-->>PAY: RazorpayOrder
+    end
+    
+    PAY-->>ORDER: Payment created
+    ORDER->>DB: Cart.clear(userId)
+    ORDER->>REDIS: DEL cart:userId
+    ORDER-->>GW: {order, paymentIntent}
+    GW-->>FE: Order confirmation + payment details
+
+    %% Payment Processing Flow
+    Note over FE,STRIPE: Payment Processing Flow
+    FE->>STRIPE: confirmPayment(paymentIntentId, paymentMethod)
+    STRIPE->>PAY: Webhook: payment_intent.succeeded
+    PAY->>PAY: verifyWebhookSignature()
+    PAY->>DB: Payment.updateStatus(paymentId, 'completed')
+    PAY->>ORDER: updateOrderStatus(orderId, 'confirmed')
+    ORDER->>DB: Order.updateStatus(orderId, 'confirmed')
+    PAY->>NOTIF: sendOrderConfirmation(orderData)
+    NOTIF->>NOTIF: sendEmail(orderConfirmationTemplate)
+    NOTIF->>FE: WebSocket: order_confirmed
+    NOTIF->>DB: Notification.create(notificationData)
+
+    %% Vendor Order Management Flow
+    Note over FE,STRIPE: Vendor Order Fulfillment Flow
+    FE->>GW: GET /vendor/orders
+    GW->>GW: authenticate(request)
+    GW->>GW: authorize(user, 'vendor')
+    GW->>ORDER: getVendorOrders(vendorId)
+    ORDER->>DB: Order.findByVendorId(vendorId)
+    ORDER-->>GW: Vendor orders
+    GW-->>FE: Orders list
+
+    FE->>GW: PUT /orders/:orderId/status {status: 'shipped'}
+    GW->>ORDER: updateOrderStatus(orderId, status)
+    ORDER->>DB: Order.updateStatus(orderId, 'shipped')
+    ORDER->>NOTIF: sendOrderShipped(orderData)
+    NOTIF->>NOTIF: sendEmail(orderShippedTemplate)
+    NOTIF->>FE: WebSocket: order_shipped
+    ORDER-->>GW: Updated order
+    GW-->>FE: Order status updated
+
+    %% Admin Vendor Approval Flow
+    Note over FE,STRIPE: Admin Vendor Approval Flow
+    FE->>GW: GET /admin/vendors/pending
+    GW->>GW: authenticate(request)
+    GW->>GW: authorize(user, 'admin')
+    GW->>PROD: getPendingVendors()
+    PROD->>DB: Vendor.findMany({status: 'pending'})
+    PROD-->>GW: Pending vendors
+    GW-->>FE: Vendors awaiting approval
+
+    FE->>GW: PUT /admin/vendors/:vendorId/approve
+    GW->>PROD: approveVendor(vendorId)
+    PROD->>DB: Vendor.updateStatus(vendorId, 'approved')
+    PROD->>NOTIF: sendVendorApproved(vendorData)
+    NOTIF->>NOTIF: sendEmail(vendorApprovedTemplate)
+    NOTIF->>FE: WebSocket: vendor_approved
+    PROD-->>GW: Vendor approved
+    GW-->>FE: Approval confirmation
+
+    %% Real-time Notifications Flow
+    Note over FE,STRIPE: Real-time Notifications Flow
+    FE->>NOTIF: WebSocket connection established
+    NOTIF->>NOTIF: addClientToRoom(userId)
+    
+    loop Order Status Updates
+        ORDER->>NOTIF: emit('order_status_changed', orderData)
+        NOTIF->>FE: WebSocket: order_status_changed
+        FE->>FE: updateOrderStatus(orderData)
+    end
+    
+    loop New Order Notifications
+        ORDER->>NOTIF: emit('new_order', orderData)
+        NOTIF->>FE: WebSocket: new_order (to vendor)
+        FE->>FE: showNotification('New order received')
+    end
